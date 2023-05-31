@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calculadora de préstamos</title>
+    <style>
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            width: 200px;
+            padding: 5px;
+        }
+
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Calculadora de préstamos</h1>
+    <form id="loan-form" onsubmit="calculateLoan(event)">
+        <label for="loan_option">Opción de préstamo:</label>
+        <input type="radio" id="loan_amount_option" name="loan_option" value="loan_amount" checked>
+        <label for="loan_amount_option">Monto principal del préstamo</label>
+        <input type="radio" id="home_value_option" name="loan_option" value="home_value">
+        <label for="home_value_option">Valor total de la casa y pago inicial</label>
+
+        <label for="loan_amount">Monto principal del préstamo:</label>
+        <input type="text" id="loan_amount" name="loan_amount" required>
+
+        <label for="home_value">Valor total de la casa:</label>
+        <input type="text" id="home_value" name="home_value">
+
+        <label for="downpayment">Pago inicial de la casa:</label>
+        <input type="text" id="downpayment" name="downpayment">
+
+        <label for="interest_rate">Tasa de interés anual:</label>
+        <input type="text" id="interest_rate" name="interest_rate" required>
+
+        <label for="duration_years">Duración del préstamo en años:</label>
+        <input type="text" id="duration_years" name="duration_years">
+
+        <label for="monthly_hoa">Cuotas mensuales de la comunidad de propietarios:</label>
+        <input type="text" id="monthly_hoa" name="monthly_hoa">
+
+        <label for="annual_property_tax">Impuesto predial anual adeudado:</label>
+        <input type="text" id="annual_property_tax" name="annual_property_tax">
+
+        <label for="annual_home_insurance">Factura anual del seguro de propietario de vivienda:</label>
+        <input type="text" id="annual_home_insurance" name="annual_home_insurance">
+
+        <input type="submit" value="Calcular">
+    </form>
+
+    <div id="result"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function calculateLoan(event) {
+            event.preventDefault();
+
+            // Obtener la opción de préstamo seleccionada
+            var loanOption = document.querySelector('input[name="loan_option"]:checked').value;
+
+            // Obtener los valores ingresados por el usuario
+            var loanAmount;
+            var homeValue;
+            var downpayment;
+            if (loanOption === "loan_amount") {
+                loanAmount = parseFloat(document.getElementById("loan_amount").value);
+                homeValue = loanAmount;
+                downpayment = homeValue - loanAmount;
+            } else {
+                homeValue = parseFloat(document.getElementById("home_value").value);
+                downpayment = parseFloat(document.getElementById("downpayment").value);
+                loanAmount = homeValue - downpayment;
+            }
+
+            var interestRate = parseFloat(document.getElementById("interest_rate").value);
+            var durationYears = parseFloat(document.getElementById("duration_years").value);
+            var monthlyHOA = parseFloat(document.getElementById("monthly_hoa").value);
+            var annualPropertyTax = parseFloat(document.getElementById("annual_property_tax").value);
+            var annualHomeInsurance = parseFloat(document.getElementById("annual_home_insurance").value);
+
+            // Realizar la llamada a la API para calcular los resultados
+            $.ajax({
+                method: 'GET',
+                url: 'https://api.api-ninjas.com/v1/mortgagecalculator',
+                headers: { 'X-Api-Key': '2jgci+zV+V28O2XFAsXwng==SUxMh1J5htSd00rf' },
+                data: {
+                    loan_amount: loanAmount,
+                    interest_rate: interestRate,
+                    duration_years: durationYears,
+                    monthly_hoa: monthlyHOA,
+                    annual_property_tax: annualPropertyTax,
+                    annual_home_insurance: annualHomeInsurance
+                },
+                contentType: 'application/json',
+                success: function(result) {
+                    // Mostrar los resultados en la página
+                    var resultElement = document.getElementById("result");
+                    resultElement.innerHTML = "Resultados:<br>";
+                    resultElement.innerHTML += "Pago mensual total: " + result.monthly_payment.total + "<br>";
+                    resultElement.innerHTML += "Pago mensual de hipoteca: " + result.monthly_payment.mortgage + "<br>";
+                    resultElement.innerHTML += "Pago mensual de impuesto predial: " + result.monthly_payment.property_tax + "<br>";
+                    resultElement.innerHTML += "Pago mensual de cuotas de la comunidad de propietarios: " + result.monthly_payment.hoa + "<br>";
+                    resultElement.innerHTML += "Pago anual de seguro de propietario de vivienda: " + result.monthly_payment.annual_home_ins + "<br>";
+
+                    resultElement.innerHTML += "Pago anual total: " + result.annual_payment.total + "<br>";
+                    resultElement.innerHTML += "Pago anual de hipoteca: " + result.annual_payment.mortgage + "<br>";
+                    resultElement.innerHTML += "Pago anual de impuesto predial: " + result.annual_payment.property_tax + "<br>";
+                    resultElement.innerHTML += "Pago anual de cuotas de la comunidad de propietarios: " + result.annual_payment.hoa + "<br>";
+                    resultElement.innerHTML += "Pago anual de seguro de propietario de vivienda: " + result.annual_payment.home_insurance + "<br>";
+
+                    resultElement.innerHTML += "Total de intereses pagados: " + result.total_interest_paid + "<br>";
+                },
+                error: function ajaxError(jqXHR) {
+                    console.error('Error: ', jqXHR.responseText);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
